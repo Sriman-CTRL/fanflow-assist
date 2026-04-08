@@ -1,13 +1,343 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>FanFlow Assist - AI Stadium Assistant</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
-    
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="brand-icon">🏟️</div>
+                <span class="brand-text">FanFlow<span class="brand-accent">Assist</span></span>
+                <span class="beta-badge">BETA</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-btn" onclick="scrollToSection('features')">Features</button>
+                <button class="nav-btn" onclick="scrollToSection('map')">Map</button>
+                <button class="accessibility-btn" onclick="toggleAccessibility()">
+                    <span id="accessIconNav">♿</span>
+                    <span id="accessTextNav">Accessible</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-background"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse-dot"></span>
+                <span>50,847 fans using now</span>
+            </div>
+            <h1 class="hero-title">
+                Never Miss a Moment<br />
+                <span class="gradient-text">Never Wait in Line</span>
+            </h1>
+            <p class="hero-subtitle">AI-powered stadium assistant that predicts crowds, finds facilities, and saves your
+                time.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-info">
+                        <div class="stat-number">2.3 min</div>
+                        <div class="stat-label">Avg. wait time saved</div>
+                    </div>
+                </div>
+                <div class="hero-stat">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <div class="stat-number">97%</div>
+                        <div class="stat-label">Prediction accuracy</div>
+                    </div>
+                </div>
+                <div class="hero-stat">
+                    <div class="stat-icon">♿</div>
+                    <div class="stat-info">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Accessible routes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Emergency Alert Bar -->
+    <div class="emergency-alert hidden" id="emergencyAlert">
+        <div class="alert-content">
+            <span class="alert-icon">🚨</span>
+            <span id="alertText"></span>
+        </div>
+        <button class="alert-close" onclick="closeAlert()">×</button>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+
+        <!-- Quick Actions Panel -->
+        <section class="quick-actions" id="features">
+            <div class="section-header">
+                <h2>Quick Actions</h2>
+                <p>Emergency assistance and instant facility finder</p>
+            </div>
+            <div class="actions-grid">
+                <button class="action-card emergency" onclick="triggerEmergency('medical')">
+                    <div class="action-icon">🚑</div>
+                    <div class="action-content">
+                        <h3>Medical Emergency</h3>
+                        <p>Instant alert to medical team</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </button>
+                <button class="action-card warning" onclick="triggerEmergency('lost')">
+                    <div class="action-icon">👶</div>
+                    <div class="action-content">
+                        <h3>Lost Child/Person</h3>
+                        <p>Alert security immediately</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </button>
+                <button class="action-card success" onclick="triggerEmergency('exit')">
+                    <div class="action-icon">🚪</div>
+                    <div class="action-content">
+                        <h3>Find Nearest Exit</h3>
+                        <p>Safest route to leave</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </button>
+                <button class="action-card info" onclick="askQuestion('upgrade seat')">
+                    <div class="action-icon">🎟️</div>
+                    <div class="action-content">
+                        <h3>Seat Upgrades</h3>
+                        <p>Check available upgrades</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+
+            <!-- AI Assistant Chat -->
+            <section class="chat-container">
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <div class="ai-avatar">
+                            <span class="avatar-pulse"></span>
+                            🤖
+                        </div>
+                        <div>
+                            <h3>FanFlow AI Assistant</h3>
+                            <p class="status-text"><span class="status-dot"></span>Online & Ready</p>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="icon-btn" onclick="clearChat()" title="Clear chat">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be inserted here -->
+                </div>
+
+                <div class="suggested-queries">
+                    <button class="query-chip" onclick="askQuestion('nearest restroom')">
+                        🚻 Nearest restroom
+                    </button>
+                    <button class="query-chip" onclick="askQuestion('fastest food')">
+                        🍔 Fastest food
+                    </button>
+                    <button class="query-chip" onclick="askQuestion('cleanest restroom')">
+                        ✨ Cleanest facilities
+                    </button>
+                    <button class="query-chip" onclick="askQuestion('upgrade seat')">
+                        🎟️ Seat upgrades
+                    </button>
+                </div>
+
+                <div class="chat-input-wrapper">
+                    <div class="input-container">
+                        <input type="text" id="chatInput" placeholder="Ask anything... 'Where's the cleanest restroom?'"
+                            onkeypress="handleEnterKey(event)" autocomplete="off">
+                        <button class="send-btn" onclick="sendMessage()">
+                            <span class="send-icon">➤</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Facilities Dashboard -->
+            <section class="facilities-dashboard">
+                <div class="dashboard-header">
+                    <div>
+                        <h3>Live Facility Status</h3>
+                        <p class="update-time">Updated <span id="updateTime">just now</span></p>
+                    </div>
+                    <select class="zone-selector" id="zoneSelector" onchange="filterZone()">
+                        <option value="all">All Zones</option>
+                        <option value="North Stand">North Stand</option>
+                        <option value="South Stand">South Stand</option>
+                        <option value="East Wing">East Wing</option>
+                        <option value="West Wing">West Wing</option>
+                    </select>
+                </div>
+
+                <div class="facility-tabs">
+                    <button class="tab-btn active" onclick="switchTab('all')" data-tab="all">
+                        All Facilities
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('restrooms')" data-tab="restrooms">
+                        🚻 Restrooms
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('foodStalls')" data-tab="foodStalls">
+                        🍔 Food
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('exits')" data-tab="exits">
+                        🚪 Exits
+                    </button>
+                </div>
+
+                <div class="facilities-list" id="facilitiesList">
+                    <!-- Facilities will be loaded here -->
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Beat the Rush Section -->
+        <section class="rush-predictor-section">
+            <div class="rush-header">
+                <div>
+                    <h2>⏰ Beat the Rush</h2>
+                    <p>AI-powered predictions to save you time</p>
+                </div>
+                <div class="rush-legend">
+                    <span class="legend-item go">🟢 Go Now</span>
+                    <span class="legend-item wait">🔴 Wait</span>
+                </div>
+            </div>
+            <div class="rush-grid" id="rushGrid">
+                <!-- Rush predictions will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Interactive Stadium Map -->
+        <section class="map-section" id="map">
+            <div class="section-header">
+                <h2>🗺️ Interactive Stadium Map</h2>
+                <p>Click on any zone to see nearby facilities</p>
+            </div>
+            <div class="stadium-wrapper">
+                <div class="stadium-grid">
+                    <div class="field-area">
+                        <div class="field-center">
+                            <div class="field-icon">⚽</div>
+                            <div class="field-text">Playing Field</div>
+                            <div class="match-status">LIVE MATCH</div>
+                        </div>
+                    </div>
+                    <div class="zone-card north" onclick="selectZone('North Stand')">
+                        <div class="zone-name">North Stand</div>
+                        <div class="zone-crowd medium">
+                            <div class="crowd-icon">🟡</div>
+                            <div>Medium Crowd</div>
+                        </div>
+                        <div class="zone-facilities">
+                            <span>🚻 4</span>
+                            <span>🍔 3</span>
+                            <span>🚪 2</span>
+                        </div>
+                    </div>
+                    <div class="zone-card south" onclick="selectZone('South Stand')">
+                        <div class="zone-name">South Stand</div>
+                        <div class="zone-crowd high">
+                            <div class="crowd-icon">🔴</div>
+                            <div>High Crowd</div>
+                        </div>
+                        <div class="zone-facilities">
+                            <span>🚻 3</span>
+                            <span>🍔 2</span>
+                            <span>🚪 2</span>
+                        </div>
+                    </div>
+                    <div class="zone-card east" onclick="selectZone('East Wing')">
+                        <div class="zone-name">East Wing</div>
+                        <div class="zone-crowd low">
+                            <div class="crowd-icon">🟢</div>
+                            <div>Low Crowd</div>
+                        </div>
+                        <div class="zone-facilities">
+                            <span>🚻 2</span>
+                            <span>🍔 1</span>
+                            <span>🚪 2</span>
+                        </div>
+                    </div>
+                    <div class="zone-card west" onclick="selectZone('West Wing')">
+                        <div class="zone-name">West Wing</div>
+                        <div class="zone-crowd medium">
+                            <div class="crowd-icon">🟡</div>
+                            <div>Medium Crowd</div>
+                        </div>
+                        <div class="zone-facilities">
+                            <span>🚻 2</span>
+                            <span>🍔 1</span>
+                            <span>🚪 2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <span class="brand-icon">🏟️</span>
+                    <span>FanFlow<span class="brand-accent">Assist</span></span>
+                </div>
+                <p>Built with Google Antigravity for PromptWars 2024</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-section">
+                    <h4>Technologies</h4>
+                    <ul>
+                        <li>Google Antigravity</li>
+                        <li>Firebase (Planned)</li>
+                        <li>Gemini API (Planned)</li>
+                        <li>Maps Platform (Planned)</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li>Beat the Rush™</li>
+                        <li>AI Assistant</li>
+                        <li>Accessibility First</li>
+                        <li>Real-time Updates</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2024 FanFlow Assist. Hackathon Demo Project.</p>
+            <p>⚠️ Using simulated data for demonstration purposes</p>
+        </div>
+    </footer>
+
     <script src="script.js"></script>
 </body>
+
 </html>
