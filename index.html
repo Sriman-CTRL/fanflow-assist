@@ -167,11 +167,19 @@
 
                 <div class="chat-input-wrapper">
                     <div class="input-container">
-                        <input type="text" id="chatInput" placeholder="Ask anything... 'Where's the cleanest restroom?'"
+                        <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecognition()" title="Voice input">
+                            <span class="voice-icon" id="voiceIcon">🎤</span>
+                        </button>
+                        <input type="text" id="chatInput"
+                            placeholder="Type or speak... 'Where's the cleanest restroom?'"
                             onkeypress="handleEnterKey(event)" autocomplete="off">
                         <button class="send-btn" onclick="sendMessage()">
                             <span class="send-icon">➤</span>
                         </button>
+                    </div>
+                    <div class="voice-indicator hidden" id="voiceIndicator">
+                        <div class="pulse-ring"></div>
+                        <span>🎤 Listening...</span>
                     </div>
                 </div>
             </section>
@@ -336,7 +344,7 @@
             <p>⚠️ Using simulated data for demonstration purposes</p>
         </div>
     </footer>
-
+    <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
 

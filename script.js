@@ -30,6 +30,8 @@ const stadiumData = {
 let accessibilityMode = false;
 let currentTab = 'all';
 let currentZone = 'all';
+let userLocation = 'North Stand';
+let conversationHistory = [];
 
 // Initialize
 window.addEventListener('DOMContentLoaded', () => {
@@ -37,13 +39,219 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeApp() {
-    addBotMessage("👋 Hi! I'm your FanFlow AI assistant. I can help you find facilities, predict wait times, and navigate the stadium. What would you like to know?");
+    addBotMessage("👋 Hi! I'm your FanFlow AI assistant. I can help you find facilities, predict wait times, and navigate the stadium. Try using voice by clicking the microphone! 🎤");
     renderFacilities();
     generateRushPredictions();
     startRealTimeUpdates();
 }
 
-// Chat Functions
+// ===================================
+// SMART RESPONSE FUNCTIONS
+// ===================================
+
+function fallbackResponse(query) {
+    console.log('🔍 Processing query:', query);
+    const lower = query.toLowerCase();
+
+    // SEAT UPGRADES
+    if (lower.includes('seat') || lower.includes('upgrade') || lower.includes('better') ||
+        lower.includes('view') || lower.includes('vip') || lower.includes('premium')) {
+        return getSeatUpgradeResponse();
+    }
+
+    // RESTROOMS
+    if (lower.includes('restroom') || lower.includes('toilet') || lower.includes('bathroom') || lower.includes('washroom')) {
+        if (lower.includes('clean')) {
+            return getCleanestRestrooms();
+        }
+        return getFallbackRecommendation('restrooms', '🚻 Best restrooms near you');
+    }
+
+    // FOOD
+    if (lower.includes('food') || lower.includes('eat') || lower.includes('hungry') ||
+        lower.includes('restaurant') || lower.includes('lunch') || lower.includes('dinner') ||
+        lower.includes('snack') || lower.includes('drink') || lower.includes('beverage') ||
+        lower.includes('pizza') || lower.includes('burger') || lower.includes('hot dog') ||
+        lower.includes('taco')) {
+        return getFallbackRecommendation('foodStalls', '🍔 Best food options for you');
+    }
+
+    // EXITS
+    if (lower.includes('exit') || lower.includes('leave') || lower.includes('out') || lower.includes('gate')) {
+        return getFallbackRecommendation('exits', '🚪 Nearest exits');
+    }
+
+    // ACCESSIBLE
+    if (lower.includes('accessible') || lower.includes('wheelchair') || lower.includes('disability')) {
+        return getAccessibleFacilities();
+    }
+
+    // CROWD INFO
+    if (lower.includes('crowd') || lower.includes('busy')) {
+        return getCrowdInfo();
+    }
+
+    // LOCATION
+    if (lower.includes('map') || lower.includes('where am i') || lower.includes('location')) {
+        return getLocationInfo();
+    }
+
+    // DEFAULT
+    return getHelpMessage();
+}
+
+function getFallbackRecommendation(type, header) {
+    let facilities = [...stadiumData[type]];
+
+    if (accessibilityMode) {
+        facilities = facilities.filter(f => f.accessible);
+    }
+
+    facilities.sort((a, b) => {
+        if (a.waitTime && b.waitTime) return a.waitTime - b.waitTime;
+        const crowdOrder = { low: 1, medium: 2, high: 3 };
+        return crowdOrder[a.crowdLevel] - crowdOrder[b.crowdLevel];
+    });
+
+    const top3 = facilities.slice(0, 3);
+
+    let response = `<strong>${header}:</strong><br><br>`;
+
+    top3.forEach((f, i) => {
+        const crowdEmoji = f.crowdLevel === 'low' ? '🟢' : f.crowdLevel === 'medium' ? '🟡' : '🔴';
+
+        response += `<strong>${i + 1}. ${f.name}</strong><br>`;
+        response += `📍 ${f.zone}<br>`;
+
+        if (f.waitTime) response += `⏱️ ${f.waitTime} min wait | `;
+        response += `${crowdEmoji} ${f.crowdLevel} crowd`;
+
+        if (f.cleanliness) response += ` | ⭐ ${f.cleanliness}/5 clean`;
+        if (f.rating) response += ` | ⭐ ${f.rating}/5 rated`;
+        if (f.accessible) response += ` | ♿ Accessible`;
+
+        response += '<br><br>';
+    });
+
+    return response;
+}
+
+function getSeatUpgradeResponse() {
+    return `<strong>🎟️ Premium Seat Upgrades Available!</strong><br><br>
+
+<strong>1. East Wing - Section E12</strong><br>
+📍 Row 5, Seats 8-10<br>
+💰 ₹2,500 (50% OFF!)<br>
+👁️ Perfect center view of the field<br>
+♿ Wheelchair accessible<br>
+⭐ Best value!<br><br>
+
+<strong>2. North Stand - VIP Box 3</strong><br>
+📍 Premium lounge access included<br>
+💰 ₹5,000<br>
+🍽️ Complimentary food & drinks<br>
+📺 Personal viewing screen<br>
+🛋️ Luxury seating<br><br>
+
+<strong>3. South Stand - Section S8</strong><br>
+📍 Row 3, Seats 15-17<br>
+💰 ₹1,800<br>
+🎵 Right near team dugout<br>
+📸 Great for photos!<br><br>
+
+Would you like me to reserve any of these for you?`;
+}
+
+function getCleanestRestrooms() {
+    let restrooms = [...stadiumData.restrooms];
+
+    if (accessibilityMode) {
+        restrooms = restrooms.filter(r => r.accessible);
+    }
+
+    restrooms.sort((a, b) => b.cleanliness - a.cleanliness);
+    const top3 = restrooms.slice(0, 3);
+
+    let response = '<strong>✨ Cleanest Restrooms Right Now:</strong><br><br>';
+
+    top3.forEach((r, i) => {
+        response += `<strong>${i + 1}. ${r.name}</strong><br>`;
+        response += `⭐ ${r.cleanliness}/5 cleanliness rating<br>`;
+        response += `📍 ${r.zone} | ⏱️ ${r.waitTime} min wait<br>`;
+        if (r.accessible) response += '♿ Wheelchair accessible<br>';
+        response += '<br>';
+    });
+
+    return response;
+}
+
+function getAccessibleFacilities() {
+    const accessible = {
+        restrooms: stadiumData.restrooms.filter(r => r.accessible),
+        food: stadiumData.foodStalls.filter(f => f.accessible),
+        exits: stadiumData.exits.filter(e => e.accessible)
+    };
+
+    return `<strong>♿ Accessible Facilities Near You:</strong><br><br>
+
+<strong>Restrooms:</strong><br>
+${accessible.restrooms.map(r => `• ${r.name} (${r.zone}) - ${r.waitTime} min wait`).join('<br>')}<br><br>
+
+<strong>Food Stalls:</strong><br>
+${accessible.food.map(f => `• ${f.name} (${f.zone}) - ${f.waitTime} min wait`).join('<br>')}<br><br>
+
+<strong>Exits:</strong><br>
+${accessible.exits.map(e => `• ${e.name} (${e.zone})`).join('<br>')}<br><br>
+
+All routes shown are wheelchair accessible! 🛤️`;
+}
+
+function getCrowdInfo() {
+    return `<strong>📊 Current Crowd Levels:</strong><br><br>
+
+<strong>North Stand:</strong> 🟡 Medium<br>
+<strong>South Stand:</strong> 🔴 High<br>
+<strong>East Wing:</strong> 🟢 Low - Perfect timing!<br>
+<strong>West Wing:</strong> 🟡 Medium<br><br>
+
+<strong>💡 Tip:</strong> East Wing has the lowest crowds right now!`;
+}
+
+function getLocationInfo() {
+    return `<strong>📍 Your Current Location:</strong><br><br>
+
+You're in: <strong>${userLocation}</strong><br><br>
+
+<strong>Nearby Facilities:</strong><br>
+• 3 Restrooms within 2 min walk<br>
+• 2 Food stalls nearby<br>
+• 1 Emergency exit 50m away<br><br>
+
+Tap any zone on the map below to see facilities! 🗺️`;
+}
+
+function getHelpMessage() {
+    return `<strong>👋 Hi! I'm FanFlow Assistant!</strong><br><br>
+
+I can help you with:<br><br>
+
+🚻 <strong>Restrooms</strong> - "Where's the nearest restroom?"<br>
+🍔 <strong>Food & Drinks</strong> - "I'm hungry, what's nearby?"<br>
+🚪 <strong>Exits</strong> - "How do I leave?"<br>
+🎟️ <strong>Seat Upgrades</strong> - "Can I get better seats?"<br>
+♿ <strong>Accessible Options</strong> - "Show accessible facilities"<br>
+📊 <strong>Crowd Info</strong> - "Which zone is least crowded?"<br>
+✨ <strong>Cleanliness</strong> - "Find cleanest restroom"<br><br>
+
+<strong>🎤 Pro Tip:</strong> Click the microphone to speak!<br><br>
+
+What would you like to know?`;
+}
+
+// ===================================
+// CHAT FUNCTIONS
+// ===================================
+
 function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
@@ -53,9 +261,37 @@ function sendMessage() {
     addUserMessage(message);
     input.value = '';
 
+    showTypingIndicator();
+
     setTimeout(() => {
-        processQuery(message);
-    }, 600);
+        removeTypingIndicator();
+        const response = fallbackResponse(message);
+        addBotMessage(response);
+    }, 800);
+}
+
+function showTypingIndicator() {
+    const container = document.getElementById('messagesContainer');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message bot typing-indicator';
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+    container.appendChild(typingDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) {
+        indicator.remove();
+    }
 }
 
 function handleEnterKey(event) {
@@ -76,7 +312,7 @@ function addUserMessage(text) {
     messageDiv.innerHTML = `
         <div class="message-avatar">👤</div>
         <div class="message-content">
-            <div class="message-text">${text}</div>
+            <div class="message-text">${escapeHtml(text)}</div>
         </div>
     `;
     container.appendChild(messageDiv);
@@ -87,130 +323,36 @@ function addBotMessage(html) {
     const container = document.getElementById('messagesContainer');
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message bot';
+
+    const formattedHtml = html.replace(/\n/g, '<br>');
+
     messageDiv.innerHTML = `
         <div class="message-avatar">🤖</div>
         <div class="message-content">
-            <div class="message-text">${html}</div>
+            <div class="message-text">${formattedHtml}</div>
         </div>
     `;
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
 }
 
-function processQuery(query) {
-    const lower = query.toLowerCase();
-
-    // Fixed: Better intent matching
-    if (lower.includes('seat') || lower.includes('upgrade') || lower.includes('better') || lower.includes('view')) {
-        handleSeatUpgrade();
-    } else if (lower.includes('restroom') || lower.includes('toilet') || lower.includes('bathroom') || lower.includes('washroom')) {
-        if (lower.includes('clean')) {
-            findCleanestRestrooms();
-        } else {
-            findBestFacility('restrooms');
-        }
-    } else if (lower.includes('food') || lower.includes('eat') || lower.includes('hungry') || lower.includes('drink') || lower.includes('beverage')) {
-        findBestFacility('foodStalls');
-    } else if (lower.includes('exit') || lower.includes('leave') || lower.includes('out') || lower.includes('gate')) {
-        findBestFacility('exits');
-    } else {
-        addBotMessage("I can help you with:<br><br>🚻 Find restrooms<br>🍔 Locate food & drinks<br>🚪 Navigate to exits<br>🎟️ Check seat upgrades<br>♿ Accessible routes<br><br>What would you like to know?");
-    }
-}
-
-function handleSeatUpgrade() {
-    addBotMessage(`
-        <strong>🎟️ Great news! Premium seats available:</strong><br><br>
-        
-        <strong>1. East Wing - Section E12</strong><br>
-        📍 Row 5, Seats 8-10<br>
-        💰 ₹2,500 upgrade (50% off!)<br>
-        👁️ Perfect center view<br>
-        ♿ Wheelchair accessible<br><br>
-        
-        <strong>2. North Stand - VIP Box 3</strong><br>
-        📍 Premium lounge access<br>
-        💰 ₹5,000 upgrade<br>
-        🍽️ Complimentary food & drinks<br>
-        📺 Personal screen<br><br>
-        
-        <strong>3. South Stand - Section S8</strong><br>
-        📍 Row 3, Seats 15-17<br>
-        💰 ₹1,800 upgrade<br>
-        🎵 Near team dugout<br><br>
-        
-        Would you like me to reserve any of these?
-    `);
-}
-
-function findBestFacility(type) {
-    let facilities = [...stadiumData[type]];
-
-    if (accessibilityMode) {
-        facilities = facilities.filter(f => f.accessible);
-    }
-
-    facilities.sort((a, b) => {
-        if (a.waitTime && b.waitTime) return a.waitTime - b.waitTime;
-        const crowdOrder = { low: 1, medium: 2, high: 3 };
-        return crowdOrder[a.crowdLevel] - crowdOrder[b.crowdLevel];
-    });
-
-    const top3 = facilities.slice(0, 3);
-    const typeIcon = type === 'restrooms' ? '🚻' : type === 'foodStalls' ? '🍔' : '🚪';
-    const typeName = type === 'restrooms' ? 'Restrooms' : type === 'foodStalls' ? 'Food Stalls' : 'Exits';
-
-    let response = `<strong>${typeIcon} Best ${typeName} for you:</strong><br><br>`;
-
-    top3.forEach((facility, index) => {
-        const crowdEmoji = facility.crowdLevel === 'low' ? '🟢' : facility.crowdLevel === 'medium' ? '🟡' : '🔴';
-        const waitInfo = facility.waitTime ? `⏱️ ${facility.waitTime} min wait` : '✅ No wait';
-        const accessEmoji = facility.accessible ? '♿ Accessible' : '';
-        const cleanInfo = facility.cleanliness ? `⭐ ${facility.cleanliness}/5 clean` : '';
-        const ratingInfo = facility.rating ? `⭐ ${facility.rating}/5 rated` : '';
-
-        response += `<strong>${index + 1}. ${facility.name}</strong><br>`;
-        response += `📍 ${facility.zone}<br>`;
-        response += `${crowdEmoji} ${facility.crowdLevel} crowd | ${waitInfo}`;
-        if (accessEmoji) response += ` | ${accessEmoji}`;
-        if (cleanInfo) response += ` | ${cleanInfo}`;
-        if (ratingInfo) response += ` | ${ratingInfo}`;
-        response += '<br><br>';
-    });
-
-    addBotMessage(response);
-}
-
-function findCleanestRestrooms() {
-    let restrooms = [...stadiumData.restrooms];
-
-    if (accessibilityMode) {
-        restrooms = restrooms.filter(r => r.accessible);
-    }
-
-    restrooms.sort((a, b) => b.cleanliness - a.cleanliness);
-    const top3 = restrooms.slice(0, 3);
-
-    let response = '<strong>✨ Cleanest Restrooms:</strong><br><br>';
-
-    top3.forEach((r, index) => {
-        response += `<strong>${index + 1}. ${r.name}</strong><br>`;
-        response += `⭐ ${r.cleanliness}/5 cleanliness rating<br>`;
-        response += `📍 ${r.zone} | ⏱️ ${r.waitTime} min wait<br>`;
-        if (r.accessible) response += '♿ Wheelchair accessible<br>';
-        response += '<br>';
-    });
-
-    addBotMessage(response);
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function clearChat() {
     const container = document.getElementById('messagesContainer');
     container.innerHTML = '';
+    conversationHistory = [];
     addBotMessage("Chat cleared! How can I help you?");
 }
 
-// Facilities Rendering
+// ===================================
+// FACILITIES RENDERING
+// ===================================
+
 function renderFacilities() {
     const container = document.getElementById('facilitiesList');
     container.innerHTML = '';
@@ -278,10 +420,14 @@ function switchTab(tab) {
 
 function filterZone() {
     currentZone = document.getElementById('zoneSelector').value;
+    userLocation = currentZone !== 'all' ? currentZone : 'North Stand';
     renderFacilities();
 }
 
-// Accessibility Toggle
+// ===================================
+// ACCESSIBILITY TOGGLE
+// ===================================
+
 function toggleAccessibility() {
     accessibilityMode = !accessibilityMode;
     const btn = document.querySelector('.accessibility-btn');
@@ -289,7 +435,7 @@ function toggleAccessibility() {
     if (accessibilityMode) {
         btn.classList.add('active');
         document.getElementById('accessIconNav').textContent = '✅';
-        addBotMessage("♿ Accessibility mode enabled. Showing only wheelchair-accessible facilities.");
+        addBotMessage("♿ Accessibility mode enabled! Showing only wheelchair-accessible facilities.");
     } else {
         btn.classList.remove('active');
         document.getElementById('accessIconNav').textContent = '♿';
@@ -298,7 +444,10 @@ function toggleAccessibility() {
     renderFacilities();
 }
 
-// Rush Predictions
+// ===================================
+// RUSH PREDICTIONS
+// ===================================
+
 function generateRushPredictions() {
     const container = document.getElementById('rushGrid');
     const minute = new Date().getMinutes();
@@ -314,21 +463,21 @@ function generateRushPredictions() {
             now: 8,
             later: phase === 'halftime' ? 15 : 3,
             recommendation: phase === 'halftime' ? 'wait' : 'go',
-            reason: phase === 'halftime' ? 'Halftime rush in 5 min. Wait for 70% less crowd.' : 'Perfect timing! Go now before the rush.'
+            reason: phase === 'halftime' ? 'Halftime rush in 5 min. Wait for 70% less crowd.' : 'Perfect timing! Go now.'
         },
         {
             name: "Pizza Paradise",
             now: 6,
             later: phase === 'pre-match' ? 12 : 4,
             recommendation: phase === 'pre-match' ? 'wait' : 'go',
-            reason: phase === 'pre-match' ? 'Pre-match rush. Wait 8 min for faster service.' : 'Queue shortening. Go now!'
+            reason: phase === 'pre-match' ? 'Pre-match rush. Wait 8 min.' : 'Queue shortening. Go now!'
         },
         {
             name: "Main Exit Gate A",
             now: 2,
             later: phase === 'post-game' ? 20 : 0,
             recommendation: phase === 'post-game' ? 'wait' : 'go',
-            reason: phase === 'post-game' ? 'Post-game crowd building. Use Gate B instead.' : 'Clear path available now.'
+            reason: phase === 'post-game' ? 'Post-game crowd. Use Gate B instead.' : 'Clear path now.'
         }
     ];
 
@@ -359,21 +508,24 @@ function generateRushPredictions() {
     });
 }
 
-// Emergency Functions
+// ===================================
+// EMERGENCY FUNCTIONS
+// ===================================
+
 function triggerEmergency(type) {
     const alert = document.getElementById('emergencyAlert');
     const alertText = document.getElementById('alertText');
 
     const messages = {
-        medical: '🚑 Medical team alerted! Help arriving at your location. Nearest station: North Stand Medical Bay.',
-        lost: '👶 Security notified! Lost child alert activated. Please proceed to nearest information desk.',
-        exit: '🚪 Emergency route activated! Follow green path markers to nearest safe exit.'
+        medical: '🚑 Medical team alerted! Help arriving. Nearest station: North Stand Medical Bay.',
+        lost: '👶 Security notified! Lost child alert activated. Go to nearest info desk.',
+        exit: '🚪 Emergency route activated! Follow green path markers to nearest exit.'
     };
 
     alertText.textContent = messages[type];
     alert.classList.remove('hidden');
 
-    addBotMessage(`<strong>⚠️ EMERGENCY RESPONSE ACTIVATED</strong><br><br>${messages[type]}`);
+    addBotMessage(`<strong>⚠️ EMERGENCY ACTIVATED</strong><br><br>${messages[type]}`);
 
     setTimeout(() => {
         alert.classList.add('hidden');
@@ -384,20 +536,27 @@ function closeAlert() {
     document.getElementById('emergencyAlert').classList.add('hidden');
 }
 
-// Zone Selection
+// ===================================
+// ZONE SELECTION
+// ===================================
+
 function selectZone(zone) {
     currentZone = zone;
+    userLocation = zone;
     document.getElementById('zoneSelector').value = zone;
-    addBotMessage(`📍 You selected ${zone}. Showing nearby facilities...`);
+    addBotMessage(`📍 Location updated to ${zone}. Showing nearby facilities!`);
     renderFacilities();
 }
 
-// Real-time Updates
+// ===================================
+// REAL-TIME UPDATES
+// ===================================
+
 function startRealTimeUpdates() {
     setInterval(() => {
         updateWaitTimes();
         updateTime();
-    }, 30000); // Every 30 seconds
+    }, 30000);
 }
 
 function updateWaitTimes() {
@@ -423,12 +582,122 @@ function updateTime() {
     document.getElementById('updateTime').textContent = 'just now';
 }
 
-// Scroll to Section
+// ===================================
+// UTILITY FUNCTIONS
+// ===================================
+
 function scrollToSection(id) {
     document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
 }
 
+// ===================================
+// VOICE ASSISTANT
+// ===================================
+
+let recognition = null;
+let synthesis = window.speechSynthesis;
+let isListening = false;
+
+function initializeSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        console.warn('Speech recognition not supported');
+        showToast('⚠️ Voice not supported. Try Chrome!');
+        return null;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = function () {
+        isListening = true;
+        updateVoiceUI(true);
+    };
+
+    recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        console.log('🗣️ User said:', transcript);
+
+        document.getElementById('chatInput').value = transcript;
+
+        setTimeout(() => {
+            sendMessage();
+        }, 500);
+
+        showToast(`You said: "${transcript}"`);
+    };
+
+    recognition.onerror = function (event) {
+        console.error('Speech error:', event.error);
+        let errorMessage = 'Voice error';
+        if (event.error === 'no-speech') errorMessage = 'No speech detected. Try again!';
+        if (event.error === 'not-allowed') errorMessage = 'Microphone permission denied';
+
+        showToast(errorMessage);
+        updateVoiceUI(false);
+        isListening = false;
+    };
+
+    recognition.onend = function () {
+        updateVoiceUI(false);
+        isListening = false;
+    };
+
+    return recognition;
+}
+
+function toggleVoiceRecognition() {
+    if (!recognition) {
+        recognition = initializeSpeechRecognition();
+        if (!recognition) return;
+    }
+
+    if (isListening) {
+        recognition.stop();
+        showToast('🛑 Stopped listening');
+    } else {
+        try {
+            recognition.start();
+            showToast('🎤 Speak now...');
+        } catch (error) {
+            showToast('⚠️ Could not start voice');
+        }
+    }
+}
+
+function updateVoiceUI(listening) {
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceIndicator = document.getElementById('voiceIndicator');
+    const voiceIcon = document.getElementById('voiceIcon');
+
+    if (listening) {
+        voiceBtn.classList.add('listening');
+        voiceIndicator.classList.remove('hidden');
+        voiceIcon.textContent = '🔴';
+    } else {
+        voiceBtn.classList.remove('listening');
+        voiceIndicator.classList.add('hidden');
+        voiceIcon.textContent = '🎤';
+    }
+}
+
+function showToast(message) {
+    const existingToast = document.getElementById('voiceToast');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'voiceToast';
+    toast.className = 'voice-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 3000);
+}
+
 // Console Easter Egg
 console.log('%c🏟️ FanFlow Assist', 'font-size: 32px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;');
-console.log('%cBuilt with Google Antigravity for PromptWars 2024', 'font-size: 14px; color: #6366F1;');
-console.log('%cTry: "Where is the cleanest restroom?" or "Upgrade my seat"', 'font-size: 12px; color: #10B981;');
+console.log('%c🎤 Voice Assistant Enabled', 'font-size: 16px; color: #EC4899; font-weight: bold;');
+console.log('%cBuilt for PromptWars 2024', 'font-size: 14px; color: #10B981;');
