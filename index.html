@@ -4,10 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4e54c8">
+    <link rel="manifest" href="manifest.json">
     <title>FanFlow Assist - AI Stadium Assistant</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -50,7 +54,7 @@
                     <div class="stat-icon">⚡</div>
                     <div class="stat-info">
                         <div class="stat-number">2.3 min</div>
-                        <div class="stat-label">Avg. wait time saved</div>
+                        <div class="stat-label">Projected time saved*</div>
                     </div>
                 </div>
                 <div class="hero-stat">
@@ -68,6 +72,7 @@
                     </div>
                 </div>
             </div>
+            <p class="disclaimer" style="font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 12px; text-align: center;">*Demo metrics are simulated for hackathon demonstration</p>
         </div>
     </section>
 
@@ -306,6 +311,93 @@
             </div>
         </section>
 
+        <!-- Data Visualization Section -->
+        <section class="analytics-section">
+            <div class="section-header">
+                <h2>📊 Live Analytics Dashboard</h2>
+                <p>Real-time crowd insights and facility analytics</p>
+            </div>
+
+            <div class="analytics-grid">
+                
+                <!-- Chart 1: Wait Time Trends -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>⏱️ Average Wait Times</h3>
+                        <span class="chart-badge">Live</span>
+                    </div>
+                    <canvas id="waitTimeChart"></canvas>
+                </div>
+
+                <!-- Chart 2: Crowd Distribution -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>👥 Crowd Distribution by Zone</h3>
+                        <span class="chart-badge">Updated 30s ago</span>
+                    </div>
+                    <canvas id="crowdChart"></canvas>
+                </div>
+
+                <!-- Chart 3: Facility Ratings -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>⭐ Top Rated Facilities</h3>
+                        <span class="chart-badge">Based on 2.5K reviews</span>
+                    </div>
+                    <canvas id="ratingsChart"></canvas>
+                </div>
+
+                <!-- Chart 4: Beat the Rush Predictions -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>🔮 Next 30 Min Predictions</h3>
+                        <span class="chart-badge">AI Powered</span>
+                    </div>
+                    <canvas id="predictionChart"></canvas>
+                </div>
+
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalVisitors">50,847</div>
+                        <div class="stat-label">Total Visitors Today</div>
+                    </div>
+                    <div class="stat-trend up">↑ 12%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="avgWaitTime">6.2 min</div>
+                        <div class="stat-label">Avg Wait Time</div>
+                    </div>
+                    <div class="stat-trend down">↓ 23%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">😊</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="satisfaction">94%</div>
+                        <div class="stat-label">Satisfaction Score</div>
+                    </div>
+                    <div class="stat-trend up">↑ 8%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="predictions">97%</div>
+                        <div class="stat-label">Prediction Accuracy</div>
+                    </div>
+                    <div class="stat-trend up">↑ 3%</div>
+                </div>
+            </div>
+        </section>
+
     </div>
 
     <!-- Footer -->
@@ -316,7 +408,7 @@
                     <span class="brand-icon">🏟️</span>
                     <span>FanFlow<span class="brand-accent">Assist</span></span>
                 </div>
-                <p>Built with Google Antigravity for PromptWars 2024</p>
+                <p>Built with Google Antigravity for PromptWars 2026</p>
             </div>
             <div class="footer-links">
                 <div class="footer-section">
@@ -340,12 +432,23 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2024 FanFlow Assist. Hackathon Demo Project.</p>
+            <p>© 2026 FanFlow Assist. Hackathon Demo Project.</p>
             <p>⚠️ Using simulated data for demonstration purposes</p>
         </div>
     </footer>
     <script src="config.js"></script>
     <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

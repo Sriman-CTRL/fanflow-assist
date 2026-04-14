@@ -81,6 +81,20 @@ function fallbackResponse(query) {
         return getFallbackRecommendation('exits', '🚪 Nearest exits');
     }
 
+    // EMERGENCY
+    if (lower.includes('emergency') || lower.includes('medical') || lower.includes('help') ||
+        lower.includes('lost') || lower.includes('child') || lower.includes('police')) {
+        if (lower.includes('medical') || lower.includes('hurt')) {
+            triggerEmergency('medical');
+            return '<strong>🚨 EMERGENCY ALERT DEPLOYED</strong><br><br>Medical assistance is being dispatched to your zone immediately. Please stay calm.';
+        } else if (lower.includes('lost') || lower.includes('child') || lower.includes('missing')) {
+            triggerEmergency('lost');
+            return '<strong>👶 SECURITY ALERT ACTIVATED</strong><br><br>Security has been notified about a lost person. Please stay where you are or find the nearest staff member immediately.';
+        } else {
+             return '<strong>⚠️ EMERGENCY ASSISTANCE</strong><br><br>Please use the designated Quick Action buttons above to trigger a specific Emergency Alert (Medical, Lost Child, or Nearest Exit).';
+        }
+    }
+
     // ACCESSIBLE
     if (lower.includes('accessible') || lower.includes('wheelchair') || lower.includes('disability')) {
         return getAccessibleFacilities();
@@ -697,7 +711,238 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
+// ===================================
+// CHARTS & DATA VISUALIZATION
+// ===================================
+
+let charts = {};
+
+function initializeCharts() {
+    // Chart 1: Wait Time Trends (Line Chart)
+    const waitTimeCtx = document.getElementById('waitTimeChart');
+    if (waitTimeCtx) {
+        charts.waitTime = new Chart(waitTimeCtx, {
+            type: 'line',
+            data: {
+                labels: ['10 min ago', '8 min ago', '6 min ago', '4 min ago', '2 min ago', 'Now'],
+                datasets: [{
+                    label: 'Restrooms',
+                    data: [8, 7, 6, 5, 4, 5],
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Food Stalls',
+                    data: [12, 11, 10, 9, 8, 8],
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Minutes'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Crowd Distribution (Doughnut Chart)
+    const crowdCtx = document.getElementById('crowdChart');
+    if (crowdCtx) {
+        charts.crowd = new Chart(crowdCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['North Stand', 'South Stand', 'East Wing', 'West Wing'],
+                datasets: [{
+                    data: [35, 25, 20, 20],
+                    backgroundColor: [
+                        '#F59E0B',
+                        '#EF4444',
+                        '#10B981',
+                        '#3B82F6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 3: Facility Ratings (Bar Chart)
+    const ratingsCtx = document.getElementById('ratingsChart');
+    if (ratingsCtx) {
+        charts.ratings = new Chart(ratingsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['East Restroom', 'West Restroom', 'Taco Fiesta', 'North A', 'Pizza Paradise'],
+                datasets: [{
+                    label: 'Rating (out of 5)',
+                    data: [4.9, 4.8, 4.7, 4.5, 4.2],
+                    backgroundColor: [
+                        '#10B981',
+                        '#10B981',
+                        '#34D399',
+                        '#34D399',
+                        '#6EE7B7'
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        title: {
+                            display: true,
+                            text: 'Star Rating'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 4: Prediction Chart (Line with forecast)
+    const predictionCtx = document.getElementById('predictionChart');
+    if (predictionCtx) {
+        charts.prediction = new Chart(predictionCtx, {
+            type: 'line',
+            data: {
+                labels: ['Now', '+5 min', '+10 min', '+15 min', '+20 min', '+25 min', '+30 min'],
+                datasets: [{
+                    label: 'North Stand Restrooms',
+                    data: [8, 12, 15, 18, 14, 10, 6],
+                    borderColor: '#EF4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderDash: [0, 0, 5, 5, 5, 5, 5]
+                }, {
+                    label: 'Pizza Paradise',
+                    data: [8, 10, 12, 10, 8, 6, 5],
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderDash: [0, 0, 5, 5, 5, 5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Wait Time (min)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update charts with live data
+function updateCharts() {
+    if (charts.waitTime) {
+        // Simulate live data update
+        const newData = stadiumData.restrooms.map(r => r.waitTime);
+        const avgWait = (newData.reduce((a, b) => a + b, 0) / newData.length).toFixed(1);
+        
+        // Update stat cards
+        document.getElementById('avgWaitTime').textContent = `${avgWait} min`;
+        
+        // Shift and add new data point to chart
+        charts.waitTime.data.labels.shift();
+        charts.waitTime.data.labels.push('Now');
+        
+        charts.waitTime.data.datasets[0].data.shift();
+        charts.waitTime.data.datasets[0].data.push(Math.floor(Math.random() * 5) + 3);
+        
+        charts.waitTime.update('none'); // Update without animation for smoothness
+    }
+}
+
+// Animate stat cards on scroll
+function animateStatsOnScroll() {
+    const stats = document.querySelectorAll('.stat-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.style.opacity = '0';
+                    entry.target.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        entry.target.style.transition = 'all 0.5s ease';
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, 10);
+                }, index * 100);
+                
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    stats.forEach(stat => observer.observe(stat));
+}
+
+// Initialize charts when page loads
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        initializeCharts();
+        animateStatsOnScroll();
+        
+        // Update charts every 30 seconds
+        setInterval(updateCharts, 30000);
+    }, 1000);
+});
+
 // Console Easter Egg
 console.log('%c🏟️ FanFlow Assist', 'font-size: 32px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;');
 console.log('%c🎤 Voice Assistant Enabled', 'font-size: 16px; color: #EC4899; font-weight: bold;');
-console.log('%cBuilt for PromptWars 2024', 'font-size: 14px; color: #10B981;');
+console.log('%cBuilt for PromptWars 2026', 'font-size: 14px; color: #10B981;');
