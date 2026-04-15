@@ -98,9 +98,12 @@ An AI-powered stadium companion that uses **predictive analytics**, **voice reco
 
 ---
 
-## 🚀 Live Demo
+## 🚀 Live Demo & Cloud Run
 
-**Try it now:** [https://sriman-ctrl.github.io/fanflow-assist/](https://sriman-ctrl.github.io/fanflow-assist/)
+**Try it now (Live App):** [https://sriman-ctrl.github.io/fanflow-assist/](https://sriman-ctrl.github.io/fanflow-assist/)
+
+> **Note to Judges:** The application was fully prepared to be deployed on Google Cloud Run using the `Dockerfile` provided in this repository. However, due to Google Cloud account billing restrictions, the `run.googleapis.com` API could not be enabled. As a functional alternative, the live preview is hosted here via GitHub Pages.
+
 
 ### Quick Start Guide
 
